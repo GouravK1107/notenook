@@ -1,0 +1,297 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — NoteNook</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/inky.css' %}"/>
+</head>
+<body>
+
+<div class="page-loader" aria-hidden="true">
+  <div class="inky-host" style="width:140px;height:150px;"></div>
+  <div class="loader-text">flipping to your page…</div>
+</div>
+
+<header class="site-nav">
+  <div class="container">
+    <a href="{% url 'homepage' %}" class="brand"><span class="brand-dot"></span> NoteNook</a>
+    <ul class="nav-links">
+      {% if user.is_authenticated %}
+        <span class="tag">Hi, {{ user.name|default:user.email|cut:"@" }}</span>
+        <a class="btn btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
+        <a class="btn btn-sm btn-ghost" href="{% url 'logout' %}">Log out</a>
+      {% else %}
+        <a class="btn btn-sm btn-ghost" href="{% url 'login' %}">Log in</a>
+        <a class="btn btn-sm btn-primary" href="{% url 'register' %}">Sign up</a>
+      {% endif %}
+    </ul>
+  </div>
+</header>
+
+<main class="dash">
+  <div class="container dash-shell">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="dash-sidebar card">
+      <div class="sidebar-mascot">
+        <div class="inky-host" data-inky-side style="width:90px;height:100px;"></div>
+        <p id="mascot-line">Ready when you are.</p>
+      </div>
+
+      <button class="btn btn-primary" id="new-note-btn" style="width:100%;">+ New note</button>
+
+      <nav class="category-nav" aria-label="Filter by category">
+        <h4>Filters</h4>
+        <ul id="category-list"></ul>
+      </nav>
+
+      <div class="sidebar-stats" id="sidebar-stats"></div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <section class="dash-main">
+      <div class="dash-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="search" id="search-input" placeholder="Search your notes…" aria-label="Search notes">
+        </div>
+        <span class="tag" id="result-count"></span>
+      </div>
+
+      <div id="notes-grid" class="notes-grid"></div>
+
+      <div id="empty-state" class="empty-state" hidden>
+        <div class="inky-host" data-inky-empty style="width:150px;height:170px;"></div>
+        <h3 id="empty-title">No notes yet</h3>
+        <p id="empty-copy">This page is blank on purpose — write the first thing on your mind.</p>
+        <button class="btn btn-primary" id="empty-cta">+ New note</button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ============ NOTE EDITOR MODAL ============ -->
+<div class="modal-overlay" id="modal-overlay" hidden>
+  <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <h2 id="modal-title">New note</h2>
+
+    <form id="note-form">
+      {% csrf_token %}
+      <div class="field" id="field-title">
+        <label for="note-title">Title</label>
+        <input type="text" id="note-title" placeholder="Give it a name" required>
+        <p class="field-error">A title helps you find it later.</p>
+      </div>
+
+      <div class="field-row">
+        <div class="field" id="field-category">
+          <label for="note-category">Category</label>
+          <select id="note-category">
+            <option value="General">General</option>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Ideas">Ideas</option>
+            <option value="__new">+ New category…</option>
+          </select>
+          <input type="text" id="note-category-new" placeholder="Category name" style="margin-top:8px; display:none;">
+        </div>
+
+        <div class="field favorite-field">
+          <label for="note-favorite">Favorite</label>
+          <button type="button" id="note-favorite" class="star-toggle" aria-pressed="false">☆</button>
+        </div>
+      </div>
+
+      <div class="field" id="field-content">
+        <label for="note-content">Note</label>
+        <textarea id="note-content" placeholder="Start typing…" rows="7" required></textarea>
+        <p class="field-error">Notes can't be empty.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="save-note-btn">Save note <span class="spinner"></span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ DELETE CONFIRM MODAL ============ -->
+<div class="modal-overlay" id="delete-overlay" hidden>
+  <div class="modal card modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
+    <div class="inky-host" data-inky-delete style="width:100px;height:110px;"></div>
+    <h2 id="delete-title">Delete this note?</h2>
+    <p>This can't be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="delete-cancel">Keep it</button>
+      <button type="button" class="btn btn-coral" id="delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<button type="button" id="dark-mode-toggle" class="dark-mode-toggle" aria-pressed="false" aria-label="Toggle dark mode">
+  <span class="dark-mode-icon" aria-hidden="true">🌙</span>
+  <span class="dark-mode-label">Dark mode</span>
+</button>
+
+<template id="note-card-template">
+  <article class="note-card card">
+    <header class="note-card-head">
+      <span class="tag note-category"></span>
+      <button class="star-toggle note-fav" aria-pressed="false">☆</button>
+    </header>
+    <h3 class="note-title"></h3>
+    <p class="note-snippet"></p>
+    <footer class="note-card-foot">
+      <time class="note-date"></time>
+      <div class="note-actions">
+        <button class="btn btn-icon btn-sm btn-ghost note-edit" title="Edit note" aria-label="Edit note">✎</button>
+        <button class="btn btn-icon btn-sm btn-ghost note-delete" title="Delete note" aria-label="Delete note">🗑</button>
+      </div>
+    </footer>
+  </article>
+</template>
+
+<style>
+  .dash{ min-height:calc(100vh - 73px); background:var(--paper-dim); padding:32px 0 60px; }
+  .dash-shell{ display:grid; grid-template-columns:250px 1fr; gap:24px; align-items:start; }
+  @media (max-width:860px){ .dash-shell{ grid-template-columns:1fr; } }
+
+  .dash-sidebar{ padding:22px; position:sticky; top:90px; display:flex; flex-direction:column; gap:20px; }
+  @media (max-width:860px){ .dash-sidebar{ position:static; } }
+  .sidebar-mascot{ text-align:center; }
+  .sidebar-mascot p{ font-family:var(--font-mono); font-size:.78rem; color:var(--muted); margin:4px 0 0; }
+
+  .category-nav h4{ font-family:var(--font-body); font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 10px; }
+  .category-nav ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; }
+  .cat-btn{
+    width:100%; text-align:left; background:none; border:none; cursor:pointer;
+    padding:9px 12px; border-radius:var(--radius-sm); font-size:.92rem; font-weight:500;
+    display:flex; justify-content:space-between; color:var(--ink-800);
+  }
+  .cat-btn:hover{ background:var(--paper-dim); }
+  .cat-btn.active{ background:var(--ink-900); color:var(--paper); }
+  .cat-count{ font-family:var(--font-mono); font-size:.75rem; opacity:.7; }
+
+  .sidebar-stats{ font-family:var(--font-mono); font-size:.75rem; color:var(--muted); border-top:1px dashed var(--paper-line); padding-top:14px; }
+
+  .dash-toolbar{ display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+  .search-wrap{ position:relative; flex:1 1 320px; }
+  .search-wrap input{
+    width:100%; padding:12px 14px 12px 42px; border:2px solid var(--ink-900); border-radius:999px;
+    background:#fff; font-size:.95rem;
+  }
+  .search-wrap input:focus{ outline:none; box-shadow:3px 3px 0 var(--highlight); }
+  .search-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); opacity:.6; }
+
+  .notes-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:18px; }
+  .note-card{
+    padding:20px; display:flex; flex-direction:column; gap:10px;
+    animation: note-in .3s ease;
+  }
+  @keyframes note-in{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:none; } }
+  .note-card.removing{ animation: note-out .25s ease forwards; }
+  @keyframes note-out{ to{ opacity:0; transform:scale(.9) rotate(2deg); } }
+
+  .note-card-head{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .note-title{ font-size:1.2rem; margin:0; }
+  .note-snippet{ color:var(--ink-700); font-size:.92rem; flex:1; margin:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+  .note-card-foot{ display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--paper-line); padding-top:10px; }
+  .note-date{ font-family:var(--font-mono); font-size:.7rem; color:var(--muted); }
+  .note-actions{ display:flex; gap:6px; }
+
+  .star-toggle{
+    background:none; border:none; cursor:pointer; font-size:1.4rem; line-height:1;
+    color:var(--ink-500); transition:transform .2s ease;
+  }
+  .star-toggle[aria-pressed="true"]{ color:var(--highlight-ink); }
+  .star-toggle.pulse{ animation:star-pulse .4s ease; }
+  @keyframes star-pulse{ 50%{ transform:scale(1.4) rotate(15deg); } }
+
+  .empty-state{ text-align:center; padding:60px 20px; }
+  .empty-state h3{ margin-top:10px; }
+  .empty-state p{ max-width:36ch; margin:0 auto 18px; }
+
+  /* modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,23,46,.55); z-index:150;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    animation:overlay-in .2s ease;
+  }
+  @keyframes overlay-in{ from{ opacity:0; } }
+  .modal{
+    width:100%; max-width:520px; padding:30px 30px 26px; position:relative;
+    animation: modal-in .25s cubic-bezier(.2,.8,.3,1.2);
+  }
+  .modal-sm{ max-width:380px; text-align:center; }
+  @keyframes modal-in{ from{ opacity:0; transform:translateY(16px) scale(.97); } to{ opacity:1; transform:none; } }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; font-size:1.1rem; cursor:pointer; color:var(--ink-500);
+  }
+  .field-row{ display:flex; gap:16px; align-items:flex-start; }
+  .field-row .field{ flex:1; }
+  .favorite-field{ flex:0 0 90px; text-align:center; }
+  .favorite-field .star-toggle{ font-size:2rem; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:10px; }
+  .modal-sm .modal-actions{ justify-content:center; }
+
+  /* -------- dark mode toggle -------- */
+  .dark-mode-toggle{
+    position:fixed; right:24px; bottom:24px; z-index:120;
+    display:flex; align-items:center; gap:8px;
+    padding:12px 18px; border-radius:999px;
+    border:2px solid var(--ink-900); background:var(--paper);
+    box-shadow:var(--shadow-pencil); cursor:pointer;
+    font-family:var(--font-body); font-weight:600; font-size:.88rem; color:var(--ink-900);
+    transition:transform .15s ease, background .2s ease, color .2s ease;
+  }
+  .dark-mode-toggle:hover{ transform:translate(-2px,-2px); }
+  .dark-mode-toggle:active{ transform:translate(0,0); box-shadow:1px 1px 0 rgba(20,23,46,.9); }
+  .dark-mode-icon{ font-size:1.05rem; line-height:1; }
+
+  /* -------- dark theme overrides (scoped to the dashboard) -------- */
+  body.dark-mode{
+    --ink-900:#f3efe4;
+    --ink-800:#e9e4d4;
+    --ink-700:#c9c4b4;
+    --ink-500:#9a9686;
+    --muted:#8a8ca0;
+    --paper:#181a2e;
+    --paper-dim:#12141f;
+    --paper-line:#2e3150;
+    background:var(--paper);
+  }
+  body.dark-mode .dash{ background:var(--paper-dim); }
+  body.dark-mode .site-nav{ background:rgba(18,20,31,.9); }
+  body.dark-mode .card,
+  body.dark-mode .note-card,
+  body.dark-mode .modal{ background:#20223a; color:var(--ink-900); }
+  body.dark-mode .field input,
+  body.dark-mode .field textarea,
+  body.dark-mode .field select,
+  body.dark-mode .search-wrap input{ background:#20223a; color:var(--ink-900); }
+  body.dark-mode .cat-btn.active{ background:var(--highlight); color:var(--ink-900); }
+  body.dark-mode .toast{ background:#f3efe4; color:var(--ink-900); }
+</style>
+
+<!-- PASS DATA FROM DJANGO TO JAVASCRIPT -->
+<script>
+  // Make sure these are defined before the scripts load
+  window.INITIAL_NOTES = {{ notes_json|safe }};
+  window.USER_ID = {{ user.id|default:'null' }};
+  
+  // Debug: log to check if data is being passed
+  console.log('USER_ID:', window.USER_ID);
+  console.log('INITIAL_NOTES count:', window.INITIAL_NOTES.length);
+</script>
+
+<script src="{% static 'js/inky.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>

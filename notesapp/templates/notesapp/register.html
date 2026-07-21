@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign up — NoteNook</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/inky.css' %}"/>
+</head>
+<body>
+
+<div class="page-loader" aria-hidden="true">
+  <div class="inky-host" style="width:140px;height:150px;"></div>
+  <div class="loader-text">setting up a fresh page…</div>
+</div>
+
+<header class="site-nav">
+  <div class="container">
+    <a href="{% url 'homepage' %}" class="brand"><span class="brand-dot"></span> NoteNook</a>
+    <ul class="nav-links">
+      {% if user.is_authenticated %}
+        <span class="tag">Hi, {{ user.name|default:user.email|cut:"@" }}</span>
+        <a class="btn btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
+        <a class="btn btn-sm btn-ghost" href="{% url 'logout' %}">Log out</a>
+      {% else %}
+        <a class="btn btn-sm btn-ghost" href="{% url 'login' %}">Log in</a>
+        <a class="btn btn-sm btn-primary" href="{% url 'register' %}">Sign up</a>
+      {% endif %}
+    </ul>
+  </div>
+</header>
+
+<main class="auth-main paper-bg">
+  <div class="container auth-container">
+    <section class="card auth-card">
+      <div class="inky-host" data-inky-auth style="width:130px;height:140px;"></div>
+      <h1>Start your notebook</h1>
+      <p class="auth-sub">Takes about thirty seconds.</p>
+
+      <form method="post" id="register-form" novalidate>
+        {% csrf_token %}
+        
+        <div class="field {% if errors.name %}has-error{% endif %}" id="field-name">
+          <label for="id_name">Name</label>
+          <input type="text" id="id_name" name="name" autocomplete="name" placeholder="Ada Lovelace" value="{{ form_data.name|default:'' }}" required>
+          <p class="field-error">{{ errors.name|default:'' }}</p>
+        </div>
+
+        <div class="field {% if errors.email %}has-error{% endif %}" id="field-email">
+          <label for="id_email">Email</label>
+          <input type="email" id="id_email" name="email" autocomplete="email" placeholder="you@example.com" value="{{ form_data.email|default:'' }}" required>
+          <p class="field-error">{{ errors.email|default:'' }}</p>
+        </div>
+
+        <div class="field {% if errors.password1 %}has-error{% endif %}" id="field-password">
+          <label for="id_password1">Password</label>
+          <input type="password" id="id_password1" name="password1" autocomplete="new-password" placeholder="At least 6 characters" required>
+          <p class="field-error">{{ errors.password1|default:'' }}</p>
+        </div>
+
+        <div class="field {% if errors.password2 %}has-error{% endif %}" id="field-confirm">
+          <label for="id_password2">Password</label>
+          <input type="password" id="id_password2" name="password2" autocomplete="new-password" placeholder="••••••••" required>
+          <p class="field-error">{{ errors.password2|default:'' }}</p>
+        </div>
+
+        {% if errors.general %}
+        <div class="field has-error">
+          <p class="field-error">{{ errors.general }}</p>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary auth-submit" id="register-btn">
+          Create account <span class="spinner"></span>
+        </button>
+      </form>
+
+      <p class="helper-text">Already have a notebook? <a href="{% url 'login' %}">Log in</a></p>
+    </section>
+  </div>
+</main>
+
+<style>
+  .auth-main{ min-height:calc(100vh - 73px); display:flex; align-items:center; padding:50px 0; }
+  .auth-container{ display:flex; justify-content:center; }
+  .auth-card{ width:100%; max-width:440px; padding:38px 34px 30px; text-align:center; }
+  .auth-card h1{ font-size:1.9rem; margin-top:6px; }
+  .auth-sub{ margin-bottom:26px; }
+  .auth-card form{ text-align:left; }
+  .auth-submit{ width:100%; margin-top:6px; position:relative; }
+</style>
+
+<script src="{% static 'js/inky.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+<script>
+  // Simple Inky animations - no Store or localStorage
+  const HERO = '[data-inky-auth]';
+  if (typeof Inky !== 'undefined') {
+    Inky.mount(HERO, 'wave');
+    Inky.mount('.page-loader .inky-host', 'think');
+    window.setTimeout(() => Inky.pose(HERO, 'idle'), 1200);
+
+    // Inky animations for form fields
+    const fields = ['id_name', 'id_email', 'id_password1', 'id_password2'];
+    function restToIdle(){
+      Inky.pose(HERO, 'idle');
+      Inky.face(HERO, 'happy');
+    }
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) {
+        el.addEventListener('focus', () => {
+          Inky.pose(HERO, 'nod');
+          Inky.face(HERO, 'happy');
+        });
+        el.addEventListener('blur', () => {
+          setTimeout(restToIdle, 100);
+        });
+      }
+    });
+  }
+</script>
+</body>
+</html>

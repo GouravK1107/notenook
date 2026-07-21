@@ -1,0 +1,954 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NoteNook — think it, jot it, find it</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/inky.css' %}"/>
+    <style>
+        /* -------- base overrides -------- */
+        .hero {
+            padding: 64px 0 80px;
+        }
+        .hero-inner {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+        .hero-copy {
+            flex: 1 1 420px;
+        }
+        .hero-copy h1 {
+            font-size: clamp(2.4rem, 5vw, 3.6rem);
+            margin: 14px 0 18px;
+        }
+        .hero-sub {
+            max-width: 46ch;
+            font-size: 1.05rem;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .hero-figure {
+            flex: 0 0 480px;
+            max-width: 100%;
+            text-align: center;
+        }
+        .hero-figure-caption {
+            font-family: var(--font-mono);
+            font-size: .78rem;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        /* -------- animated outdoor scene -------- */
+        .hero-scene {
+            position: relative;
+            width: 100%;
+            height: 230px;
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--ink-900);
+            overflow: hidden;
+            box-shadow: var(--shadow-pencil);
+            background: linear-gradient(180deg, #bfe3f7 0%, #dff0fb 55%, #eaf6ff 100%);
+        }
+
+        .scene-sun {
+            position: absolute;
+            top: 20px;
+            right: 26px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--highlight);
+            border: 2px solid var(--ink-900);
+            box-shadow: 0 0 0 8px rgba(255, 210, 63, .28);
+            animation: sun-pulse 3.4s ease-in-out infinite;
+            z-index: 1;
+        }
+        @keyframes sun-pulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        .scene-cloud {
+            position: absolute;
+            background: #fff;
+            border: 2px solid var(--ink-900);
+            border-radius: 40px;
+            z-index: 2;
+        }
+        .scene-cloud::before,
+        .scene-cloud::after {
+            content: "";
+            position: absolute;
+            background: #fff;
+            border: 2px solid var(--ink-900);
+            border-radius: 50%;
+        }
+        .cloud-1 {
+            width: 70px;
+            height: 26px;
+            top: 26px;
+            animation: drift 20s linear infinite;
+        }
+        .cloud-1::before {
+            width: 30px;
+            height: 30px;
+            top: -16px;
+            left: 8px;
+        }
+        .cloud-1::after {
+            width: 22px;
+            height: 22px;
+            top: -10px;
+            left: 36px;
+        }
+        .cloud-2 {
+            width: 52px;
+            height: 20px;
+            top: 64px;
+            animation: drift 30s linear infinite;
+            animation-delay: -9s;
+        }
+        .cloud-2::before {
+            width: 24px;
+            height: 24px;
+            top: -13px;
+            left: 6px;
+        }
+        .cloud-2::after {
+            width: 18px;
+            height: 18px;
+            top: -8px;
+            left: 28px;
+        }
+        .cloud-3 {
+            width: 42px;
+            height: 16px;
+            top: 12px;
+            animation: drift 15s linear infinite;
+            animation-delay: -4s;
+        }
+        .cloud-3::before {
+            width: 19px;
+            height: 19px;
+            top: -11px;
+            left: 5px;
+        }
+        .cloud-3::after {
+            width: 14px;
+            height: 14px;
+            top: -6px;
+            left: 21px;
+        }
+        @keyframes drift {
+            from {
+                transform: translateX(340px);
+            }
+            to {
+                transform: translateX(-120px);
+            }
+        }
+
+        .scene-bird {
+            position: absolute;
+            top: 52px;
+            left: -40px;
+            width: 30px;
+            height: 16px;
+            animation: fly 8s linear infinite;
+            animation-delay: 1.5s;
+            z-index: 3;
+        }
+        .scene-bird svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: var(--ink-900);
+            stroke-width: 2.4;
+            stroke-linecap: round;
+            animation: flap .32s ease-in-out infinite alternate;
+            transform-origin: center;
+        }
+        @keyframes fly {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(400px);
+            }
+        }
+        @keyframes flap {
+            from {
+                transform: scaleY(1);
+            }
+            to {
+                transform: scaleY(.55);
+            }
+        }
+
+        /* -------- ground with repeating pattern for movement -------- */
+        .scene-ground {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 54px;
+            background-color: #6cc47c;
+            background-image:
+                repeating-linear-gradient(90deg,
+                    #7cbf7c 0px,
+                    #6cc47c 6px,
+                    #8ed99b 6px,
+                    #8ed99b 12px);
+            background-repeat: repeat-x;
+            background-size: auto 100%;
+            border-top: 2px solid var(--ink-900);
+            z-index: 4;
+        }
+        .scene-grass {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 48px;
+            height: 14px;
+            background-image: repeating-linear-gradient(105deg, var(--ink-900) 0 2px, transparent 2px 16px);
+            opacity: .5;
+            background-repeat: repeat-x;
+            background-size: 160px 100%;
+            z-index: 5;
+        }
+
+        /* -------- the rock (moves with ground) -------- */
+        .scene-rock {
+            position: absolute;
+            left: 0;
+            bottom: 44px;
+            width: 26px;
+            height: 16px;
+            z-index: 6;
+            will-change: transform;
+        }
+        .scene-rock-inner {
+            width: 100%;
+            height: 100%;
+        }
+        .scene-rock svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .scene-rock path {
+            fill: #b9b3a0;
+            stroke: #14172e;
+            stroke-width: 2;
+            stroke-linejoin: round;
+        }
+        /* The outer .scene-rock's transform is owned by JS (its horizontal
+           position on the ground). The bump wobble is applied to the INNER
+           element instead, so the two transforms never fight over the same
+           element — otherwise the animation would replace (not add to) the
+           JS translateX and the rock would visually snap back to x:0. */
+        .scene-rock.rock-bumped .scene-rock-inner {
+            animation: rock-bump .5s ease forwards;
+        }
+        @keyframes rock-bump {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            30% {
+                transform: translateY(-6px) rotate(10deg);
+            }
+            70% {
+                transform: translateY(3px) rotate(-4deg);
+            }
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+        }
+
+        /* -------- dust poof: an impact flash plus motes that puff up and out -------- */
+        .scene-dust {
+            position: absolute;
+            left: calc(50% + 4px);
+            bottom: 42px;
+            width: 50px;
+            height: 28px;
+            pointer-events: none;
+            z-index: 7;
+        }
+        /* the "boom" — a quick bright shockwave right at the moment of impact */
+        .scene-dust::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, .85) 0%, rgba(180, 175, 158, .55) 45%, rgba(180, 175, 158, 0) 75%);
+            opacity: 0;
+            transform: scale(.3);
+        }
+        .scene-inky.inky-fall ~ .scene-dust::before {
+            animation: dust-flash .45s ease-out .55s forwards;
+        }
+        @keyframes dust-flash {
+            0% { opacity: 0; transform: scale(.25); }
+            35% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(2); }
+        }
+
+        /* the dust itself — little puffs that rise and scatter as they fade */
+        .dust-particle {
+            position: absolute;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle, rgba(190, 185, 168, .9), rgba(190, 185, 168, 0) 70%);
+        }
+        .p1 { left: 12px; bottom: 4px; }
+        .p2 { left: 26px; bottom: 0px; }
+        .p3 { left: 4px;  bottom: 8px; }
+        .p4 { left: 34px; bottom: 4px; }
+        .p5 { left: 19px; bottom: 9px; }
+
+        .scene-inky.inky-fall ~ .scene-dust .p1 { animation: dust-rise-1 1s ease-out .55s forwards; }
+        .scene-inky.inky-fall ~ .scene-dust .p2 { animation: dust-rise-2 1.15s ease-out .58s forwards; }
+        .scene-inky.inky-fall ~ .scene-dust .p3 { animation: dust-rise-3 .95s ease-out .6s forwards; }
+        .scene-inky.inky-fall ~ .scene-dust .p4 { animation: dust-rise-4 1.2s ease-out .57s forwards; }
+        .scene-inky.inky-fall ~ .scene-dust .p5 { animation: dust-rise-5 1.05s ease-out .62s forwards; }
+
+        @keyframes dust-rise-1 {
+            0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+            20% { opacity: .9; }
+            100% { opacity: 0; transform: translate(-10px, -48px) scale(1.3); }
+        }
+        @keyframes dust-rise-2 {
+            0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+            20% { opacity: .85; }
+            100% { opacity: 0; transform: translate(16px, -42px) scale(1.2); }
+        }
+        @keyframes dust-rise-3 {
+            0% { opacity: 0; transform: translate(0, 0) scale(.4); }
+            20% { opacity: .9; }
+            100% { opacity: 0; transform: translate(-22px, -34px) scale(1.1); }
+        }
+        @keyframes dust-rise-4 {
+            0% { opacity: 0; transform: translate(0, 0) scale(.45); }
+            20% { opacity: .85; }
+            100% { opacity: 0; transform: translate(24px, -38px) scale(1.25); }
+        }
+        @keyframes dust-rise-5 {
+            0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+            20% { opacity: .9; }
+            100% { opacity: 0; transform: translate(2px, -52px) scale(1.15); }
+        }
+
+        /* -------- butterfly -------- */
+        .scene-butterfly {
+            position: absolute;
+            width: 22px;
+            height: 16px;
+            left: -30px;
+            top: 90px;
+            opacity: 0;
+            z-index: 8;
+            animation: butterfly-flight 19.6s ease-in-out infinite;
+        }
+        .scene-butterfly svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+        .wing {
+            fill: var(--coral);
+            stroke: #14172e;
+            stroke-width: 1.5;
+            transform-origin: 11px 8px;
+            animation: wing-flap .16s ease-in-out infinite alternate;
+        }
+        .wing-r {
+            animation-delay: .08s;
+        }
+        @keyframes wing-flap {
+            from {
+                transform: scaleX(1);
+            }
+            to {
+                transform: scaleX(.35);
+            }
+        }
+        @keyframes butterfly-flight {
+            0%,
+            17% {
+                left: -30px;
+                top: 96px;
+                opacity: 0;
+            }
+            24% {
+                opacity: 1;
+            }
+            38% {
+                left: 44%;
+                top: 58px;
+                opacity: 1;
+            }
+            47% {
+                left: 50%;
+                top: 80px;
+                opacity: 1;
+            }
+            56% {
+                left: 56%;
+                top: 52px;
+                opacity: 1;
+            }
+            65% {
+                opacity: 1;
+            }
+            72% {
+                left: 74%;
+                top: 44px;
+                opacity: 0;
+            }
+            100% {
+                left: 74%;
+                top: 44px;
+                opacity: 0;
+            }
+        }
+
+        /* -------- blackout overlay -------- */
+        .scene-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #14172e;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.6s ease;
+        }
+
+        /* -------- Inky positioning -------- */
+        .scene-inky {
+            position: absolute;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 118px;
+            height: 140px;
+            margin: 0;
+            z-index: 10;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .scene-cloud,
+            .scene-bird,
+            .scene-bird svg,
+            .scene-sun,
+            .scene-butterfly,
+            .wing,
+            .scene-dust::before,
+            .dust-particle,
+            .scene-rock,
+            .scene-rock-inner {
+                animation: none !important;
+            }
+        }
+
+        /* -------- feature sections (unchanged) -------- */
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 36px;
+        }
+        .features {
+            padding: 70px 0;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .feature-card {
+            padding: 26px;
+            position: relative;
+            transition: transform .2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px) rotate(-.4deg);
+        }
+        .feature-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid var(--ink-900);
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+        }
+        .note-yellow .feature-mark {
+            background: var(--highlight);
+        }
+        .note-mint .feature-mark {
+            background: var(--mint);
+        }
+        .note-coral .feature-mark {
+            background: var(--coral);
+            color: #fff;
+        }
+        .note-blue .feature-mark {
+            background: #a7c7ff;
+        }
+
+        .how {
+            padding: 70px 0;
+        }
+        .how-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 28px;
+        }
+        .how-step {
+            text-align: center;
+        }
+        .how-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--ink-900);
+            color: var(--paper);
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+
+        .cta {
+            padding: 20px 0 90px;
+        }
+        .cta-card {
+            padding: 34px 40px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            background: var(--ink-900);
+            color: var(--paper);
+        }
+        .cta-card h2 {
+            color: var(--paper);
+            font-size: 1.6rem;
+        }
+        .cta-card p {
+            color: var(--paper-line);
+        }
+
+        .site-footer {
+            border-top: 2px solid var(--ink-900);
+            padding: 26px 0;
+        }
+        .site-footer p {
+            font-family: var(--font-mono);
+            font-size: .78rem;
+            color: var(--muted);
+            text-align: center;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== PAGE LOADER ====== -->
+    <div class="page-loader" aria-hidden="true">
+        <div class="inky-host" style="width:140px;height:150px;"></div>
+        <div class="loader-text">opening the notebook…</div>
+    </div>
+
+    <!-- ====== NAV ====== -->
+    <header class="site-nav">
+        <div class="container">
+            <a href="{% url 'homepage' %}" class="brand"><span class="brand-dot"></span> NoteNook</a>
+            <ul class="nav-links">
+                {% if user.is_authenticated %}
+                    <span class="tag">Hi, {{ user.name|default:user.email|cut:"@" }}</span>
+                    <a class="btn btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
+                    <a class="btn btn-sm btn-ghost" href="{% url 'logout' %}">Log out</a>
+                {% else %}
+                    <a class="btn btn-sm btn-ghost" href="{% url 'login' %}">Log in</a>
+                    <a class="btn btn-sm btn-primary" href="{% url 'register' %}">Sign up</a>
+                {% endif %}
+            </ul>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- ====== HERO ====== -->
+        <section class="hero paper-bg">
+            <div class="container hero-inner">
+                <div class="hero-copy">
+                    <span class="tag">a notebook that remembers everything</span>
+                    <h1>Jot it down<br />before it slips away.</h1>
+                    <p class="hero-sub">NoteNook is a fast, doodle-simple place to capture ideas, sort them into
+                        categories, star your favorites, and find any of it again in seconds — all saved right
+                        in your browser.</p>
+                    <div class="hero-actions">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+                        {% else %}
+                            <a href="{% url 'register' %}" class="btn btn-primary">Start writing — it's free</a>
+                            <a href="{% url 'login' %}" class="btn btn-ghost">I already have an account</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="hero-figure">
+                    <div class="hero-scene" id="heroScene">
+                        <!-- background elements -->
+                        <div class="scene-sun"></div>
+                        <div class="scene-cloud cloud-1"></div>
+                        <div class="scene-cloud cloud-2"></div>
+                        <div class="scene-cloud cloud-3"></div>
+                        <div class="scene-bird">
+                            <svg viewBox="0 0 40 20"><path d="M2,14 Q10,0 20,10 Q30,0 38,14"></path></svg>
+                        </div>
+
+                        <!-- ground & grass -->
+                        <div class="scene-ground" id="sceneGround"></div>
+                        <div class="scene-grass" id="sceneGrass"></div>
+
+                        <!-- the rock -->
+                        <div class="scene-rock" id="sceneRock" aria-hidden="true">
+                            <div class="scene-rock-inner">
+                                <svg viewBox="0 0 30 18">
+                                    <path d="M2,16 Q0,8 8,6 Q10,0 18,2 Q28,2 28,10 Q30,16 22,16 Z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- butterfly -->
+                        <div class="scene-butterfly" aria-hidden="true">
+                            <svg viewBox="0 0 22 16">
+                                <ellipse class="wing wing-l" cx="7" cy="8" rx="6" ry="5"></ellipse>
+                                <ellipse class="wing wing-r" cx="15" cy="8" rx="6" ry="5"></ellipse>
+                                <line x1="11" y1="3" x2="11" y2="13" stroke="#14172e" stroke-width="1.5"></line>
+                            </svg>
+                        </div>
+
+                        <!-- Inky host -->
+                        <div class="inky-host scene-inky" data-inky-hero></div>
+
+                        <!-- dust poof -->
+                        <div class="scene-dust" aria-hidden="true">
+                            <span class="dust-particle p1"></span>
+                            <span class="dust-particle p2"></span>
+                            <span class="dust-particle p3"></span>
+                            <span class="dust-particle p4"></span>
+                            <span class="dust-particle p5"></span>
+                        </div>
+
+                        <!-- blackout overlay -->
+                        <div class="scene-overlay" id="sceneOverlay"></div>
+                    </div>
+                    <p class="hero-figure-caption">Inky, out for a walk while your notes save themselves</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== FEATURES ====== -->
+        <section class="features container">
+            <h2 class="section-title">Everything a good notebook should do</h2>
+            <div class="feature-grid">
+                <article class="card feature-card note-yellow">
+                    <span class="feature-mark">✎</span>
+                    <h3>Create notes</h3>
+                    <p>Open a blank page and get an idea down in one motion — title, body, done.</p>
+                </article>
+                <article class="card feature-card note-mint">
+                    <span class="feature-mark">✓</span>
+                    <h3>Edit anytime</h3>
+                    <p>Notes aren't precious. Click in, change your mind, save again.</p>
+                </article>
+                <article class="card feature-card note-coral">
+                    <span class="feature-mark">🗑</span>
+                    <h3>Delete with confidence</h3>
+                    <p>Clear out the clutter — a quick confirm keeps it from being an accident.</p>
+                </article>
+                <article class="card feature-card note-blue">
+                    <span class="feature-mark">🔍</span>
+                    <h3>Search instantly</h3>
+                    <p>Type a word, watch the page narrow itself down as you go.</p>
+                </article>
+                <article class="card feature-card note-yellow">
+                    <span class="feature-mark">🏷</span>
+                    <h3>Sort into categories</h3>
+                    <p>Work, Life, Ideas, or your own labels — keep related thoughts together.</p>
+                </article>
+                <article class="card feature-card note-mint">
+                    <span class="feature-mark">★</span>
+                    <h3>Star favorites</h3>
+                    <p>Pin the notes you reach for often straight to the top of the pile.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- ====== HOW IT WORKS ====== -->
+        <section class="how paper-bg">
+            <div class="container">
+                <h2 class="section-title">Three steps, no friction</h2>
+                <div class="how-steps">
+                    <div class="how-step">
+                        <span class="how-num">1</span>
+                        <h3>Sign up</h3>
+                        <p>Pick a name, an email, a password. No verification emails, no waiting.</p>
+                    </div>
+                    <div class="how-step">
+                        <span class="how-num">2</span>
+                        <h3>Open your dashboard</h3>
+                        <p>One page for everything — writing, searching, sorting, starring.</p>
+                    </div>
+                    <div class="how-step">
+                        <span class="how-num">3</span>
+                        <h3>Keep it close</h3>
+                        <p>Everything saves to this browser instantly, so it's there when you're back.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== CTA ====== -->
+        <section class="cta container">
+            <div class="card cta-card">
+                <div class="inky-host" data-inky-cta style="width:130px;height:140px;"></div>
+                <div>
+                    <h2>Your next idea deserves a home.</h2>
+                    <p>It takes about thirty seconds to make an account.</p>
+                </div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary">Open Dashboard</a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-primary">Create my notebook</a>
+                {% endif %}
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>NoteNook — built with HTML, CSS &amp; JS. Your notes live in this browser's local storage.</p>
+        </div>
+    </footer>
+
+    <!-- ====== SCRIPTS ====== -->
+    <script src="{% static 'js/inky.js' %}">
+    </script>
+    <script src="{% static 'js/app.js' %}">
+    </script>
+    <script>
+        (function() {
+            const heroSelector = '[data-inky-hero]';
+            const heroScene = document.getElementById('heroScene');
+            const ground = document.getElementById('sceneGround');
+            const grass = document.getElementById('sceneGrass');
+            const rock = document.getElementById('sceneRock');
+            const overlay = document.getElementById('sceneOverlay');
+
+            if (!heroScene || !ground || !grass || !rock || !overlay) return;
+
+            // ---------- MOUNT INKY ----------
+            Inky.mount(heroSelector, 'walk');
+
+            // ---------- state machine ----------
+            const STATE = {
+                WALKING: 'WALKING',
+                TRIPPING: 'TRIPPING',
+                BLACKOUT: 'BLACKOUT',
+                RESPAWNING: 'RESPAWNING'
+            };
+
+            let state = STATE.WALKING;
+            let stateTimer = 0;
+            let groundOffset = 0;
+            const SPEED = 62; // px/s — a calm, unhurried stroll
+            const ROCK_WIDTH = 26;
+            // Inky's feet are dead-center of his host, which is itself centered
+            // in the scene — so his foot position IS the scene's horizontal
+            // midpoint. Reading clientWidth live keeps this correct on resize.
+            function inkyFootX() {
+                return heroScene.clientWidth / 2;
+            }
+            // The rock starts well off the right edge with some randomness so
+            // each lap isn't identical — this also gives Inky a long, calm
+            // stretch of walking before he ever reaches it.
+            function randomRockStart() {
+                return inkyFootX() + 620 + Math.random() * 260;
+            }
+            let rockX = randomRockStart();
+            const TRIP_TOLERANCE = 10; // px either side of dead-center counts as "under his feet"
+
+            let lastTimestamp = 0;
+
+            Inky.pose(heroSelector, 'walk');
+            Inky.face(heroSelector, 'happy');
+
+            rock.style.transform = `translateX(${rockX}px)`;
+
+            function update(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const deltaTime = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
+                lastTimestamp = timestamp;
+
+                switch (state) {
+                    case STATE.WALKING: {
+                        groundOffset -= SPEED * deltaTime;
+                        rockX -= SPEED * deltaTime;
+
+                        ground.style.backgroundPositionX = groundOffset + 'px';
+                        grass.style.backgroundPositionX = groundOffset + 'px';
+                        rock.style.transform = `translateX(${rockX}px)`;
+
+                        // --- TRIP CONDITION ---
+                        // Trip exactly when the rock's own center reaches Inky's
+                        // feet (the scene's horizontal midpoint), not some fixed
+                        // pixel band near the edge of the scene.
+                        const rockCenter = rockX + ROCK_WIDTH / 2;
+                        if (Math.abs(rockCenter - inkyFootX()) < TRIP_TOLERANCE) {
+                            state = STATE.TRIPPING;
+                            stateTimer = 0;
+                            Inky.pose(heroSelector, 'fall');
+                            Inky.face(heroSelector, 'sad');
+                            rock.classList.add('rock-bumped');
+                            // dust animation triggers via CSS
+                        }
+                        break;
+                    }
+
+                    case STATE.TRIPPING:
+                        stateTimer += deltaTime;
+                        if (stateTimer > 1.4) {
+                            state = STATE.BLACKOUT;
+                            stateTimer = 0;
+                            overlay.style.opacity = 1;
+                        }
+                        break;
+
+                    case STATE.BLACKOUT:
+                        stateTimer += deltaTime;
+                        if (stateTimer > 1) {
+                            state = STATE.RESPAWNING;
+                            stateTimer = 0;
+
+                            // reset everything
+                            groundOffset = 0;
+                            rockX = randomRockStart();
+                            ground.style.backgroundPositionX = '0px';
+                            grass.style.backgroundPositionX = '0px';
+                            rock.style.transform = `translateX(${rockX}px)`;
+                            rock.classList.remove('rock-bumped');
+
+                            const inkyEl = document.querySelector(heroSelector);
+                            if (inkyEl) inkyEl.classList.remove('inky-fall');
+                            Inky.pose(heroSelector, 'walk');
+                            Inky.face(heroSelector, 'happy');
+
+                            overlay.style.opacity = 0;
+                            state = STATE.WALKING;
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                requestAnimationFrame(update);
+            }
+
+            requestAnimationFrame(update);
+
+            // ---- user interaction overrides (scrolling, idle) ----
+            let userOverride = false;
+            let scrollEndTimer;
+            let wasScrolling = false;
+
+            function storyFace(name) {
+                if (!userOverride && state === STATE.WALKING) Inky.face(heroSelector, name);
+            }
+
+            // ---- Inky reacts to the butterfly ----
+            // The butterfly is a pure-CSS loop (`butterfly-flight`, 19.6s,
+            // infinite, started at page load). These timers are kept on the
+            // same 19.6s cadence so his grin lines up with when it's actually
+            // fluttering near him (roughly the 24%–65% window of that keyframe).
+            const BUTTERFLY_CYCLE = 19600;
+            function scheduleButterflyReaction() {
+                setTimeout(() => storyFace('grin'), 5000);
+                setTimeout(() => storyFace('happy'), 13000);
+            }
+            scheduleButterflyReaction();
+            setInterval(scheduleButterflyReaction, BUTTERFLY_CYCLE);
+
+            window.addEventListener('scroll', function() {
+                noteActivity();
+                if (!wasScrolling) {
+                    wasScrolling = true;
+                    userOverride = true;
+                    Inky.face(heroSelector, 'focused');
+                }
+                clearTimeout(scrollEndTimer);
+                scrollEndTimer = setTimeout(function() {
+                    wasScrolling = false;
+                    userOverride = false;
+                }, 1000);
+            }, { passive: true });
+
+            const AFK_AFTER = 12000;
+            let lastActivity = Date.now();
+            let isAfk = false;
+
+            function noteActivity() {
+                lastActivity = Date.now();
+                if (isAfk) {
+                    isAfk = false;
+                    userOverride = false;
+                    Inky.face(heroSelector, 'happy');
+                }
+            }
+            ['mousemove', 'keydown', 'click', 'touchstart'].forEach(function(evt) {
+                window.addEventListener(evt, noteActivity, { passive: true });
+            });
+
+            setInterval(function() {
+                if (!isAfk && Date.now() - lastActivity > AFK_AFTER) {
+                    isAfk = true;
+                    userOverride = true;
+                    Inky.face(heroSelector, 'angry');
+                }
+            }, 1000);
+
+            // mount other Inky instances
+            Inky.mount('.page-loader .inky-host', 'think');
+            Inky.mount('[data-inky-cta]', 'idle');
+        })();
+    </script>
+</body>
+</html>

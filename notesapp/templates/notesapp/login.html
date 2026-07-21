@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — NoteNook</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/inky.css' %}"/>
+</head>
+<body>
+
+<div class="page-loader" aria-hidden="true">
+  <div class="inky-host" style="width:140px;height:150px;"></div>
+  <div class="loader-text">opening the notebook…</div>
+</div>
+
+<header class="site-nav">
+  <div class="container">
+    <a href="{% url 'homepage' %}" class="brand"><span class="brand-dot"></span> NoteNook</a>
+    <ul class="nav-links" data-nav-auth></ul>
+  </div>
+</header>
+
+<main class="auth-main paper-bg">
+  <div class="container auth-container">
+    <section class="card auth-card">
+      <div class="inky-host inky-fast" data-inky-auth style="width:130px;height:140px;"></div>
+      <h1>Welcome back</h1>
+      <p class="auth-sub">Log in to get back to your notes.</p>
+
+      <form method="post" id="login-form" novalidate>
+        {% csrf_token %}
+        
+        <div class="field {% if error %}has-error{% endif %}" id="field-email">
+          <label for="id_username">Email</label>
+          <input type="email" name="username" id="id_username" autocomplete="email" placeholder="you@example.com" required>
+          <p class="field-error">{{ error|default:'' }}</p>
+        </div>
+
+        <div class="field {% if error %}has-error{% endif %}" id="field-password">
+          <label for="id_password">Password</label>
+          <input type="password" name="password" id="id_password" autocomplete="current-password" placeholder="••••••••" required>
+          <p class="field-error">{{ error|default:'' }}</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary auth-submit" id="login-btn">
+          Log in <span class="spinner"></span>
+        </button>
+      </form>
+
+      <p class="helper-text">New here? <a href="{% url 'register' %}">Create an account</a></p>
+    </section>
+  </div>
+</main>
+
+<style>
+  .auth-main{ min-height:calc(100vh - 73px); display:flex; align-items:center; padding:50px 0; }
+  .auth-container{ display:flex; justify-content:center; }
+  .auth-card{ width:100%; max-width:420px; padding:38px 34px 30px; text-align:center; }
+  .auth-card h1{ font-size:1.9rem; margin-top:6px; }
+  .auth-sub{ margin-bottom:26px; }
+  .auth-card form{ text-align:left; }
+  .auth-submit{ width:100%; margin-top:6px; position:relative; }
+</style>
+
+<script src="{% static 'js/inky.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+<script>
+  // Simple Inky animations - no Store or localStorage
+  const HERO = '[data-inky-auth]';
+  if (typeof Inky !== 'undefined') {
+    Inky.mount(HERO, 'wave');
+    Inky.mount('.page-loader .inky-host', 'think');
+    window.setTimeout(() => Inky.pose(HERO, 'idle'), 1200);
+
+    // Inky animations for form fields
+    const emailInput = document.getElementById('id_username');
+    const passwordInput = document.getElementById('id_password');
+    
+    function restToIdle(){
+      Inky.pose(HERO, 'idle');
+      Inky.face(HERO, 'happy');
+    }
+    
+    if (emailInput) {
+      emailInput.addEventListener('focus', () => {
+        Inky.pose(HERO, 'nod');
+        Inky.face(HERO, 'happy');
+      });
+      emailInput.addEventListener('blur', () => setTimeout(restToIdle, 100));
+    }
+    
+    if (passwordInput) {
+      passwordInput.addEventListener('focus', () => {
+        Inky.pose(HERO, 'look-down');
+        Inky.face(HERO, 'focused');
+      });
+      passwordInput.addEventListener('blur', () => setTimeout(restToIdle, 100));
+    }
+  }
+</script>
+</body>
+</html>
