@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page not found — NoteNook</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --ink-900:#14172e;
+    --ink-700:#2e3163;
+    --muted:#8a8cae;
+    --paper:#fbf9f4;
+    --paper-line:#ddd6c1;
+    --rule-red:#e2a3a3;
+    --highlight:#ffd23f;
+    --coral:#ff6b6b;
+    --font-display:'Kalam', cursive;
+    --font-body:'Work Sans', system-ui, sans-serif;
+    --font-mono:'Space Mono', monospace;
+    --shadow-pencil: 3px 4px 0 rgba(20,23,46,0.9);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  body{
+    margin:0; min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-body); color:var(--ink-900);
+    background:
+      linear-gradient(var(--paper-line) 1px, transparent 1px) 0 90px / 100% 34px,
+      var(--paper);
+    position:relative; overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:""; position:absolute; top:0; bottom:0; left:56px; width:1px;
+    background:var(--rule-red); opacity:.55; pointer-events:none;
+  }
+  @media (max-width:640px){ body::before{ left:28px; } }
+
+  .nf-watermark{
+    position:absolute; z-index:0; font-family:var(--font-display); font-weight:700;
+    font-size:min(46vw, 420px); color:var(--ink-900); opacity:.05;
+    top:50%; left:50%; transform:translate(-50%,-52%); white-space:nowrap; user-select:none;
+  }
+
+  .nf-card{
+    position:relative; z-index:1;
+    max-width:480px; width:100%; margin:24px;
+    background:#fff; border:2px solid var(--ink-900); border-radius:22px;
+    box-shadow:var(--shadow-pencil);
+    padding:14px 34px 38px; text-align:center;
+  }
+
+  .nf-stage{ width:190px; height:210px; margin:0 auto -6px; }
+  .nf-stage svg{ width:100%; height:100%; overflow:visible; }
+
+  .nf-code{
+    font-family:var(--font-mono); font-weight:700; letter-spacing:2px;
+    font-size:.8rem; color:var(--muted);
+    border:1.5px solid var(--ink-900); border-radius:999px; background:var(--paper);
+    display:inline-flex; padding:4px 12px; margin-bottom:10px;
+  }
+
+  h1{
+    font-family:var(--font-display); font-size:clamp(1.5rem, 4vw, 2rem);
+    margin:4px 0 10px; line-height:1.2;
+  }
+  p{ color:var(--ink-700); line-height:1.6; max-width:36ch; margin:0 auto 24px; }
+
+  .nf-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-weight:600; font-size:.95rem; text-decoration:none; color:var(--ink-900);
+    padding:12px 24px; border-radius:999px; border:2px solid var(--ink-900);
+    background:var(--highlight); box-shadow:var(--shadow-pencil);
+    transition:transform .15s ease;
+  }
+  .nf-btn:hover{ transform:translate(-2px,-2px); }
+  .nf-btn:active{ transform:translate(0,0); box-shadow:1px 1px 0 rgba(20,23,46,.9); }
+
+  /* ===================== Inky ===================== */
+  .inky-line{ fill:none; stroke:var(--ink-900); stroke-width:4.5; stroke-linecap:round; stroke-linejoin:round; }
+  .inky-head{ fill:var(--paper); stroke:var(--ink-900); stroke-width:4.5; }
+  .inky-hat-dome{ fill:var(--highlight); stroke:var(--ink-900); stroke-width:4; stroke-linejoin:round; }
+  .inky-hat-band{ fill:none; stroke:var(--ink-900); stroke-width:4; stroke-linecap:round; }
+  .inky-hat-pompom{ fill:var(--paper); stroke:var(--ink-900); stroke-width:3; }
+  .inky-brow{ stroke:var(--ink-900); stroke-width:3; stroke-linecap:round; fill:none; }
+  .inky-eye{ fill:var(--ink-900); }
+  .inky-mouth{ fill:none; stroke:var(--ink-900); stroke-width:3.2; stroke-linecap:round; }
+  .inky-mouth-confused{ fill:var(--ink-900); }
+  .inky-hand-shape{ fill:var(--paper); stroke:var(--ink-900); stroke-width:3.5; }
+  .inky-hand-thumb{ stroke:var(--ink-900); stroke-width:3; stroke-linecap:round; }
+  .inky-shoe{ fill:var(--ink-900); }
+  .inky-qmark{ font-family:var(--font-display); font-weight:700; fill:var(--ink-900); opacity:0; }
+
+  .inky-arm-l, .inky-arm-r{ transform-origin:100px 96px; }
+  .inky-leg-l, .inky-leg-r{ transform-origin:100px 150px; }
+  .inky-head-grp{ transform-origin:100px 55px; }
+  .inky-body-grp{ transform-origin:100px 120px; }
+
+  /* master 8s story: idle scan → puzzled shrug → question marks → settle → repeat */
+  .inky-body-grp{ animation: nf-body-life 8s ease-in-out infinite; }
+  .inky-head-grp{ animation: nf-head-scan 8s ease-in-out infinite; }
+  .inky-arm-l{ animation: nf-arm-l 8s ease-in-out infinite; }
+  .inky-arm-r{ animation: nf-arm-r 8s ease-in-out infinite; }
+  .inky-leg-l{ animation: nf-weight-l 5.2s ease-in-out infinite; }
+  .inky-leg-r{ animation: nf-weight-r 5.2s ease-in-out infinite; }
+  .inky-eye{ animation: nf-blink 4.6s ease-in-out infinite; }
+
+  .inky-mouth-confused, .inky-brow-confused-l, .inky-brow-confused-r{ opacity:0; }
+  .inky-mouth-normal, .inky-mouth-confused{ animation: nf-face-swap 8s ease-in-out infinite; }
+  .inky-brow-normal-l, .inky-brow-confused-l{ animation: nf-face-swap 8s ease-in-out infinite; }
+  .inky-brow-normal-r, .inky-brow-confused-r{ animation: nf-face-swap 8s ease-in-out infinite; }
+  .inky-mouth-confused, .inky-brow-confused-l, .inky-brow-confused-r{ animation-name: nf-face-swap-in; }
+
+  .inky-qmark{ animation: nf-qmark-pop 8s ease-out infinite; }
+  .inky-qmark:nth-of-type(2){ animation-delay:.12s; }
+  .inky-qmark:nth-of-type(3){ animation-delay:.24s; }
+
+  @keyframes nf-body-life{
+    0%{ transform:translateY(0); }
+    10%{ transform:translateY(-2px); }
+    20%{ transform:translateY(0); }
+    30%{ transform:translateY(-2px); }
+    40%,55%{ transform:translateY(0); }
+    63%,78%{ transform:translateY(-7px); }
+    90%,100%{ transform:translateY(0); }
+  }
+  @keyframes nf-head-scan{
+    0%{ transform:rotate(0deg); }
+    15%{ transform:rotate(-14deg); }
+    30%{ transform:rotate(0deg); }
+    45%{ transform:rotate(14deg); }
+    58%{ transform:rotate(0deg); }
+    65%,80%{ transform:rotate(-5deg); }
+    100%{ transform:rotate(0deg); }
+  }
+  @keyframes nf-arm-l{
+    0%,55%{ transform:rotate(0deg); }
+    63%,78%{ transform:rotate(-100deg); }
+    90%,100%{ transform:rotate(0deg); }
+  }
+  @keyframes nf-arm-r{
+    0%,55%{ transform:rotate(0deg); }
+    63%,78%{ transform:rotate(100deg); }
+    90%,100%{ transform:rotate(0deg); }
+  }
+  @keyframes nf-weight-l{ 0%,100%{ transform:rotate(0deg); } 50%{ transform:rotate(1.8deg); } }
+  @keyframes nf-weight-r{ 0%,100%{ transform:rotate(0deg); } 50%{ transform:rotate(-1.8deg); } }
+  @keyframes nf-blink{
+    0%,90%,100%{ transform:scaleY(1); }
+    94%{ transform:scaleY(.1); }
+    97%{ transform:scaleY(.7); }
+  }
+  @keyframes nf-face-swap{
+    0%,55%{ opacity:1; }
+    63%,78%{ opacity:0; }
+    90%,100%{ opacity:1; }
+  }
+  @keyframes nf-face-swap-in{
+    0%,55%{ opacity:0; }
+    63%,78%{ opacity:1; }
+    90%,100%{ opacity:0; }
+  }
+  @keyframes nf-qmark-pop{
+    0%,58%{ opacity:0; transform:translateY(0) scale(.3); }
+    64%{ opacity:1; transform:translateY(-6px) scale(1.15); }
+    74%{ opacity:1; transform:translateY(-16px) scale(1); }
+    82%{ opacity:0; transform:translateY(-28px) scale(.9); }
+    100%{ opacity:0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .inky-body-grp, .inky-head-grp, .inky-arm-l, .inky-arm-r, .inky-leg-l, .inky-leg-r,
+    .inky-eye, .inky-mouth-normal, .inky-mouth-confused, .inky-brow-normal-l, .inky-brow-normal-r,
+    .inky-brow-confused-l, .inky-brow-confused-r, .inky-qmark{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="nf-watermark" aria-hidden="true">404</div>
+
+  <main class="nf-card">
+    <div class="nf-stage" aria-hidden="true">
+      <svg viewBox="0 0 200 220" role="img" aria-label="Inky the stick figure, scratching his head, unable to find this page">
+
+        <text class="inky-qmark" x="128" y="20" font-size="20">?</text>
+        <text class="inky-qmark" x="146" y="8" font-size="15">?</text>
+        <text class="inky-qmark" x="160" y="26" font-size="11">?</text>
+
+        <g class="inky-body-grp">
+          <g class="inky-head-grp">
+            <circle class="inky-head" cx="100" cy="50" r="29"></circle>
+
+            <g class="inky-hat">
+              <path class="inky-hat-dome" d="M74,33 Q74,9 100,7 Q126,9 126,33 Q100,25 74,33 Z"></path>
+              <path class="inky-hat-band" d="M72,32 Q100,42 128,32"></path>
+              <circle class="inky-hat-pompom" cx="100" cy="7" r="5"></circle>
+            </g>
+
+            <path class="inky-brow inky-brow-normal-l" d="M79,39 L93,36"></path>
+            <path class="inky-brow inky-brow-normal-r" d="M107,35 L121,40"></path>
+            <path class="inky-brow inky-brow-confused-l" d="M78,32 L93,29"></path>
+            <path class="inky-brow inky-brow-confused-r" d="M107,29 L122,32"></path>
+
+            <circle class="inky-eye" cx="89" cy="47" r="3"></circle>
+            <circle class="inky-eye" cx="111" cy="47" r="3"></circle>
+
+            <path class="inky-mouth inky-mouth-normal" d="M86 59 Q100 70 114 58"></path>
+            <path class="inky-mouth inky-mouth-confused" d="M92 62 Q100 58 108 62 Q104 68 96 68 Z"></path>
+          </g>
+
+          <path class="inky-line inky-spine" d="M100 79 Q97 112 100 149"></path>
+
+          <g class="inky-arm-l">
+            <line class="inky-line" x1="100" y1="95" x2="64" y2="130"></line>
+            <g transform="translate(64 130)">
+              <circle class="inky-hand-shape" cx="0" cy="0" r="8"></circle>
+              <line class="inky-hand-thumb" x1="-5" y1="-6" x2="2" y2="-12"></line>
+            </g>
+          </g>
+          <g class="inky-arm-r">
+            <line class="inky-line" x1="100" y1="95" x2="136" y2="130"></line>
+            <g transform="translate(136 130)">
+              <circle class="inky-hand-shape" cx="0" cy="0" r="8"></circle>
+              <line class="inky-hand-thumb" x1="-5" y1="-6" x2="2" y2="-12"></line>
+            </g>
+          </g>
+
+          <g class="inky-leg-l">
+            <line class="inky-line" x1="100" y1="149" x2="74" y2="205"></line>
+            <ellipse class="inky-shoe" cx="72" cy="208" rx="15" ry="7" transform="rotate(-6 72 208)"></ellipse>
+          </g>
+          <g class="inky-leg-r">
+            <line class="inky-line" x1="100" y1="149" x2="126" y2="205"></line>
+            <ellipse class="inky-shoe" cx="128" cy="208" rx="15" ry="7" transform="rotate(6 128 208)"></ellipse>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <span class="nf-code">ERROR 404</span>
+    <h1>Even Inky can't find this page.</h1>
+    <p>It might have been moved, renamed, or maybe it never existed in the first place.</p>
+    <a class="nf-btn" href="{% url 'homepage' %}">← Take me home</a>
+  </main>
+
+</body>
+</html>
